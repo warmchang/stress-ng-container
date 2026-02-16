@@ -3,5 +3,4 @@
 *.md
 LICENSE
 tests/
-pod.yaml
-ubuntu.Dockerfile
+*.tar.gz

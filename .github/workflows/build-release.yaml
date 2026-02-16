@@ -23,6 +23,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential zlib1g-dev libaio-dev libcap-dev \
+            libattr1-dev libsctp-dev libatomic1 libxxhash-dev
+
+      - name: Build static stress-ng
+        run: |
+          curl -sL "https://github.com/ColinIanKing/stress-ng/archive/V${{ github.ref_name }}.tar.gz" | tar xz
+          cd "stress-ng-${{ github.ref_name }}"
+          STATIC=1 make -j"$(nproc)"
+          strip stress-ng
+          ./stress-ng --version
+          cp stress-ng "$GITHUB_WORKSPACE/stress-ng"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -38,7 +54,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          build-args: STRESS_NG_VERSION=${{ github.ref_name }}
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/stress-ng,push-by-digest=true,name-canonical=true,push=true
 

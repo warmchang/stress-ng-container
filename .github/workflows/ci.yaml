@@ -45,6 +45,22 @@ jobs:
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "stress-ng version: ${version}"
 
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential zlib1g-dev libaio-dev libcap-dev \
+            libattr1-dev libsctp-dev libatomic1 libxxhash-dev
+
+      - name: Build static stress-ng
+        run: |
+          curl -sL "https://github.com/ColinIanKing/stress-ng/archive/V${{ steps.stress_ng.outputs.version }}.tar.gz" | tar xz
+          cd "stress-ng-${{ steps.stress_ng.outputs.version }}"
+          STATIC=1 make -j"$(nproc)"
+          strip stress-ng
+          ./stress-ng --version
+          cp stress-ng "$GITHUB_WORKSPACE/stress-ng"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -52,11 +68,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          build-args: STRESS_NG_VERSION=${{ steps.stress_ng.outputs.version }}
           load: true
-          tags: alexeiled/stress-ng:test
+          tags: stress-ng:test
 
       - name: Run integration tests
         run: |
           chmod +x tests/test-docker.sh
-          TEST_IMAGE=alexeiled/stress-ng:test ./tests/test-docker.sh
+          TEST_IMAGE=stress-ng:test ./tests/test-docker.sh

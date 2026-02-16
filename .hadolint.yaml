@@ -1,2 +1,0 @@
-ignored:
-  - DL3008  # apt pin versions — not needed for build-stage-only deps
