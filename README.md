@@ -44,10 +44,10 @@ spec:
 
 ## How It Works
 
-- **No source code in this repo** — only the Dockerfile and CI/CD pipelines
-- **Automated updates** — a weekly GitHub Action checks for new upstream [stress-ng releases](https://github.com/ColinIanKing/stress-ng/tags) and auto-creates tags
-- **Multi-arch builds** — native runners for `amd64` and `arm64` (no QEMU emulation)
-- **Scratch image** — just the statically linked binary, nothing else
+- **No source code in this repo** — only the minimal build configuration.
+- **Native Builds** — the binary is compiled natively on GitHub Actions runners (`ubuntu-24.04` for amd64, `ubuntu-24.04-arm` for arm64) for maximum speed and reliability.
+- **Scratch Image** — the compiled binary is copied into a `scratch` image (0 dependencies, minimal size).
+- **GitHub Container Registry** — images are pushed exclusively to `ghcr.io`.
 
 ## License
 
