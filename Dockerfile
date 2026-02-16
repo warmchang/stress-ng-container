@@ -1,23 +1,38 @@
-FROM debian:buster as builder
+# Stage 1: Build static stress-ng from upstream sources
+FROM debian:bookworm-slim AS builder
 
-# intall gcc and supporting packages
-RUN apt-get update && apt-get install -yq make gcc
+# Install build dependencies for static stress-ng
+# Core deps only — keeps image minimal while supporting most stressors
+RUN apt-get update && \
+    apt-get install -yq --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        zlib1g-dev \
+        libaio-dev \
+        libcap-dev \
+        libattr1-dev \
+        libsctp-dev \
+        libatomic1 \
+        libxxhash-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /code
 
-# download stress-ng sources
+# Download stress-ng sources
 ARG STRESS_NG_VERSION
-ENV STRESS_NG_VERSION ${STRESS_NG_VERSION:-0.10.10}
 ADD https://github.com/ColinIanKing/stress-ng/archive/V${STRESS_NG_VERSION}.tar.gz .
 RUN tar -xf V${STRESS_NG_VERSION}.tar.gz && mv stress-ng-${STRESS_NG_VERSION} stress-ng
 
-# make static version
+# Build static binary
 WORKDIR /code/stress-ng
-RUN STATIC=1 make
+RUN STATIC=1 make -j "$(nproc)" && strip stress-ng
 
-# Final image
+# Verify the binary works
+RUN ./stress-ng --version
+
+# Final image: scratch with only the static binary
 FROM scratch
 
-COPY --from=builder /code/stress-ng/stress-ng /
+COPY --from=builder /code/stress-ng/stress-ng /stress-ng
 
 ENTRYPOINT ["/stress-ng"]

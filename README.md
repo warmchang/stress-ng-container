@@ -1,20 +1,54 @@
 # stress-ng
-[![](https://github.com/alexei-led/stress-ng/workflows/Docker%20Image%20CI/badge.svg)](https://github.com/alexei-led/stress-ng/actions?query=workflow%3A"Docker+Image+CI") [![](https://github.com/alexei-led/stress-ng/workflows/Check%20stress-ng%20Release/badge.svg)](https://github.com/alexei-led/stress-ng/actions?query=workflow%3A"Check+stress-ng+Release")
-[![Docker Pulls](https://img.shields.io/docker/pulls/alexeiled/stress-ng.svg)](https://hub.docker.com/r/alexeiled/stress-ng/) [![Docker Stars](https://img.shields.io/docker/stars/alexeiled/stress-ng.svg)](https://hub.docker.com/r/alexeiled/stress-ng/)
 
-## Info
+[![CI](https://github.com/alexei-led/stress-ng/actions/workflows/ci.yaml/badge.svg)](https://github.com/alexei-led/stress-ng/actions/workflows/ci.yaml)
+[![Build and Release](https://github.com/alexei-led/stress-ng/actions/workflows/build-release.yaml/badge.svg)](https://github.com/alexei-led/stress-ng/actions/workflows/build-release.yaml)
 
-`stress-ng` Docker image is a `scratch` image that contains statically linked `stress-ng` tool only.
+Minimal multi-arch (`linux/amd64`, `linux/arm64`) Docker image with a statically linked [stress-ng](https://github.com/ColinIanKing/stress-ng) binary. Built from `scratch` — nothing but the binary.
 
-## Auto update
+> **⚠️ DockerHub Deprecation:** The `alexeiled/stress-ng` DockerHub image is deprecated. Use `ghcr.io/alexei-led/stress-ng` instead.
 
-This image is automatically rebuilt, using GitHub actions, once a new version of `stress-ng` tool is released.
+## Pull
+
+```bash
+docker pull ghcr.io/alexei-led/stress-ng:latest
+```
+
+Or pin to a specific version:
+
+```bash
+docker pull ghcr.io/alexei-led/stress-ng:0.20.00
+```
 
 ## Usage
 
-Read the official `stress-ng` [documentation](http://kernel.ubuntu.com/~cking/stress-ng/).
-
-```sh
-# run for 60 seconds with 4 cpu stressors, 2 io stressors and 1 vm stressor using 1GB of virtual memory
-docker run -it --rm alexeiled/stress-ng --cpu 4 --io 2 --vm 1 --vm-bytes 1G --timeout 60s --metrics-brief
+```bash
+# Run for 60 seconds with 4 CPU stressors, 2 IO stressors,
+# and 1 VM stressor using 1GB of virtual memory
+docker run --rm ghcr.io/alexei-led/stress-ng \
+  --cpu 4 --io 2 --vm 1 --vm-bytes 1G --timeout 60s --metrics-brief
 ```
+
+### Kubernetes
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-ng
+spec:
+  containers:
+    - name: stress-ng
+      image: ghcr.io/alexei-led/stress-ng:latest
+      args: ["--cpu", "2", "--timeout", "60s", "--metrics-brief"]
+```
+
+## How It Works
+
+- **No source code in this repo** — only the Dockerfile and CI/CD pipelines
+- **Automated updates** — a weekly GitHub Action checks for new upstream [stress-ng releases](https://github.com/ColinIanKing/stress-ng/tags) and auto-creates tags
+- **Multi-arch builds** — native runners for `amd64` and `arm64` (no QEMU emulation)
+- **Scratch image** — just the statically linked binary, nothing else
+
+## License
+
+[GPL-2.0](LICENSE) (same as upstream stress-ng)

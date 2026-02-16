@@ -1,0 +1,45 @@
+name: Check for New stress-ng Release
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly on Monday at 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest upstream version
+        id: upstream
+        run: |
+          version=$(curl --silent --fail "https://api.github.com/repos/ColinIanKing/stress-ng/tags?per_page=5" \
+            | jq -r '[.[] | .name | select(test("^V[0-9]+\\.[0-9]+\\.[0-9]+$"))][0]' \
+            | sed 's/^V//')
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Latest upstream: ${version}"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ steps.upstream.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.upstream.outputs.version }} already exists"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "New version available: ${{ steps.upstream.outputs.version }}"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.upstream.outputs.version }}" -m "stress-ng ${{ steps.upstream.outputs.version }}"
+          git push origin "${{ steps.upstream.outputs.version }}"
